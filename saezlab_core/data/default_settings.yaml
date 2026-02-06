@@ -1,4 +1,19 @@
-settings_version: 0.0.1 # version of this configuration system in Saezlab
+# =============================================================================
+# Default configuration for saezlab_core.
+# 
+# Baseline values for: application, environments, session, logging, and
+# integrations. User configs can override any section.
+# =============================================================================
+
+settings_version: 0.0.1 # configuration schema version
+
+# -------------------------------------
+# ----      Application           -----
+# -------------------------------------
+app:
+  name: null
+  environment: dev # key under `environment`
+  logger: default  # logger name under `logging.loggers`
 
 # -------------------------------------
 # ----      Environment           -----
@@ -15,11 +30,14 @@ environment:
     debug: false
 
 # -------------------------------------
-# ----      Application           -----
+# ----      Session               -----
 # -------------------------------------
-app:
-  name: null
-  environment: null
+session:
+  id: null
+  user: null
+  workspace: null
+  started_at: null
+  tags: [] # optional labels for the session
 
 # -------------------------------------
 # ----      Paths                 -----
@@ -31,28 +49,18 @@ paths:
   temp_dir: null
 
 # -------------------------------------
-# ----      Session               -----
-# -------------------------------------
-session:
-  id: null
-  user: null
-  workspace: null
-  started_at: null
-  tags: [] # Ecosystem maybe
-
-# -------------------------------------
 # ----      Logging               -----
 # -------------------------------------
 logging:
-  version: 1   # version of this logging configuration
+  version: 1 # logging.config.dictConfig version
   disable_existing_loggers: false
   formatters:
     default:
-      format: '[%(asctime)s.%(msecs)03d] %(levelname)s in %(module)s: %(message)s'
-      datefmt: '%Y-%m-%d %H:%M:%S'
+      format: "[%(asctime)s.%(msecs)03d] %(levelname)s in %(module)s: %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
     simple:
       format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
-    
+
   handlers:
     console:
       class: logging.StreamHandler
@@ -69,11 +77,19 @@ logging:
       delay: true
 
   loggers:
-    saezlab_infra:
+    default:
+      level: INFO
+      handlers: [console, file]
+      propagate: false
+    verbose:
       level: DEBUG
       handlers: [console, file]
       propagate: false
-      
+    quiet:
+      level: WARNING
+      handlers: [file]
+      propagate: false
+
   filters:
     allow_all:
       (): logging.Filter
@@ -86,3 +102,12 @@ logging:
 # ----      Integrations          -----
 # -------------------------------------
 integrations: {}
+
+# -------------------------------------
+# ----      Ecosystem             -----
+# -------------------------------------
+ecosystems:
+  sysbioverse:
+    - corneto
+    - omnipath
+    - annnet
