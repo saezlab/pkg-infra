@@ -14,7 +14,7 @@
 #
 
 from .logger import get_logger
-from .session import Session
+from .session_bkp import Session
 
 __all__ = ['get_logger', 'Session']
 

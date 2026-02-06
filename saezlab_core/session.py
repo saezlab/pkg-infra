@@ -1,46 +1,80 @@
-from .config import ConfigLoader
-from .logger import get_logger, setup_logging, stop_async_listener
+import getpass
+import json
+import logging
+import socket
+import uuid
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from urllib.error import URLError, HTTPError
+from urllib.request import urlopen
 
-__all__ = [
-    'Session',
-]
 
+from saezlab_core.config_test import ConfigLoader
 
+_logger = logging.getLogger(__name__)
+_logger.addHandler(logging.NullHandler())
+
+@dataclass(frozen=True)
 class Session:
-    """Central session manager for config and logging.
+    id: str
+    user: str
+    workspace: Path
+    started_at_utc: str
+    started_at_local: str
+    timezone: str | None
+    location: str | None
+    hostname: str
+    config: None
 
-    Ensures singleton initialization and global access to config and loggers.
-    """
+    def log(self, logger: logging.Logger = _logger) -> None:
+        logger.info("Session data: ")
+        for attribute in self.__annotations__.keys():
+            logger.info("%s: %s", attribute, getattr(self, attribute))
 
-    _initialized = False
-    _config = None
+_session: Session | None = None
 
-    @classmethod
-    def stop_logging(cls) -> None:
-        """Stop the async logging listener (if any) to flush all logs."""
-        stop_async_listener()
 
-    @classmethod
-    def initialize(cls, config_path: str) -> None:
-        """Initialize session with config and logging. Only runs once."""
-        if cls._initialized:
-            return
-        cls._config = ConfigLoader.load(config_path)
-        setup_logging(cls._config.get('logging', {}))
-        cls._initialized = True
+def _lookup_location(timeout: float = 2.0) -> str | None:
+    """Best-effort geolocation using a public IP lookup."""
+    _logger.debug("Resolving location via ipinfo.io")
+    try:
+        with urlopen("https://ipinfo.io/json", timeout=timeout) as response:
+            data = json.load(response)
+            city = data.get("city")
+            region = data.get("region")
+            country = data.get("country")
+            parts = [p for p in (city, region, country) if p]
+            location = ", ".join(parts) if parts else None
+            _logger.info("Resolved location: %s", location)
+            return location
+    except (URLError, ValueError):
+        _logger.warning("Location lookup failed", exc_info=True)
+        return None
 
-    @classmethod
-    def get_config(cls) -> object:
-        """Get the loaded config (DictConfig)."""
-        return cls._config
+def get_session(workspace: str | Path, include_location: bool = True) -> Session:
+    """Return a singleton Session for this process."""
+    global _session
+    _logger.debug("Requesting session for workspace: %s", workspace)
+    if _session is None:
+        now_utc = datetime.now(timezone.utc)
+        now_local = datetime.now().astimezone()
+        location = _lookup_location() if include_location else None
+        _logger.info("Creating new session")
+        _session = Session(
+            id=str(uuid.uuid4()),
+            user=getpass.getuser(),
+            workspace=Path(workspace).expanduser().resolve(),
+            started_at_utc=now_utc.isoformat().replace("+00:00", "Z"),
+            started_at_local=now_local.isoformat(),
+            timezone=now_local.tzname(),
+            location=location,
+            hostname=socket.gethostname(),
+            config=ConfigLoader.load_config()
+        )
+    else:
+        _logger.debug("Reusing existing session")
+    return _session
 
-    @staticmethod
-    def get_logger(name: str) -> object:
-        """Get a logger for a given module/component."""
-        return get_logger(name)
 
-    @classmethod
-    def reset(cls) -> None:
-        """Reset the session (for testing or re-initialization)."""
-        cls._initialized = False
-        cls._config = None
+__all__ = ["Session", "get_session"]
