@@ -72,7 +72,7 @@ logging:
       class: logging.FileHandler
       level: DEBUG
       formatter: default
-      filename: "logs/file_loggger.log"
+      filename: "logs/file_logger.log"
       encoding: utf-8
 
   loggers:

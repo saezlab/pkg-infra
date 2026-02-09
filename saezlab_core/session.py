@@ -13,9 +13,11 @@ from urllib.request import urlopen
 from typing import Optional, Any
 
 # Third-party/local imports
+from omegaconf import OmegaConf
 from saezlab_core.logger import configure_loggers_from_omegaconf
 from saezlab_core.config import ConfigLoader
 from saezlab_core import __log_timestamp__
+
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -78,6 +80,17 @@ class Session:
     def log(self) -> None:
         """Log the string representation of the session using the module logger."""
         logger.info(str(self))
+
+    def print_config(self) -> None:
+        """Print the config attribute as yaml."""
+        cfg = self.config
+        try:
+            if OmegaConf is not None and OmegaConf.is_config(cfg):
+                print(OmegaConf.to_yaml(cfg))
+                return
+        except ImportError:
+            logger.info("OmegaConf is not available. Falling back to pprint.")
+
 
     @staticmethod
     def get_logger():
