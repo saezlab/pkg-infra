@@ -13,16 +13,31 @@
 # https://opensource.org/license/mit
 #
 
-from .logger import get_logger
-from .session_bkp import Session
+"""
+Session handler, configuration, and logging handler for Saezlab packages and applications.
+"""
 
-__all__ = ['get_logger', 'Session']
+import datetime
+import logging
 
-"""This is session handler, configuration and logging handler for Saezlab packages and applications."""
+# Generate a single timestamp for log files
+LOG_TIMESTAMP = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+__log_timestamp__ = LOG_TIMESTAMP
+
+# Configure the root logger with the timestamp
+from saezlab_core.logger import get_root_logger_configured
+get_root_logger_configured(timestamp=LOG_TIMESTAMP)
+
+
+# Public API
+
+from .session import get_session
 
 __all__ = [
+    'get_session',
     '__version__',
-    '__author__',
+    '__author__'
 ]
 
-# from ._metadata import __author__, __version__
+# Log import for debugging
+logging.info(f"Importing {__name__}")

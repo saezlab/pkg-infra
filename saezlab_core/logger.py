@@ -1,140 +1,107 @@
-import os
-import sys
+
+# Standard library imports
+import copy
+import datetime
 import logging
-from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
+import os
+from pathlib import Path
+from logging.config import dictConfig
 
-from pythonjsonlogger import jsonlogger
+# Third-party imports
+from omegaconf import OmegaConf
 
-__all__ = [
-    'get_logger',
-    'setup_logging',
-    'stop_async_listener',
-]
+# Local imports
+from saezlab_core.config import read_package_default
 
-_listener = None  # Global reference for QueueListener
+# Module logger
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
+DEFAULT_FILENAME_LOG_MISSING = "logs/saezlab_core.log"
 
-def setup_logging(config: dict) -> None:
-    """Set up logging using a DictConfig (OmegaConf) or dict.
+def _uppercase_levels(d):
+	"""
+	Recursively convert all 'level' values in a dict to uppercase strings.
+	"""
+	if isinstance(d, dict):
+		for k, v in d.items():
+			if k == "level" and isinstance(v, str):
+				d[k] = v.upper()
+			else:
+				_uppercase_levels(v)
+	elif isinstance(d, list):
+		for item in d:
+			_uppercase_levels(item)
 
-    Supports rotation, timestamped files, console+file handlers, logger exclusion, and optional JSON logs.
+def update_log_filenames_with_timestamp(config_dict, timestamp=None):
+	"""
+	Update all 'filename' values in the config_dict (recursively) by appending a timestamp before the file extension.
+	If timestamp is not provided, use current UTC time in YYYYMMDDHHMMSS format.
+	"""
+	if timestamp is None:
+		timestamp = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
-    Args:
-        config (dict): Logging configuration dictionary or DictConfig.
-    """
-    # Support both DictConfig and dict
-    cfg = config if isinstance(config, dict) else dict(config)
-    log_dir = cfg.get('log_dir', './log')
-    app_name = cfg.get('app_name', 'saezlab_core')
-    log_level = getattr(logging, cfg.get('level', 'INFO').upper(), logging.INFO)
-    log_format = cfg.get(
-        'format', '[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s'
-    )
-    # Support max_megabytes (preferred) or fallback to max_bytes for backward compatibility
-    if 'max_megabytes' in cfg:
-        max_bytes = int(cfg.get('max_megabytes', 10)) * 1024 * 1024
-    else:
-        max_bytes = cfg.get('max_bytes', 10 * 1024 * 1024)
-    backup_count = cfg.get('backup_count', 5)
-    timestamp = cfg.get('timestamp')
-    use_json = cfg.get('json_logs', False)
-    timezone = cfg.get('timezone', 'UTC')
-    import queue
-    from datetime import datetime
+	def update_filename(filename):
+		base, ext = os.path.splitext(filename)
+		return f"{base}_{timestamp}{ext}"
 
-    try:
-        from zoneinfo import ZoneInfo
+	def recursive_update(d):
+		if isinstance(d, dict):
+			for k, v in d.items():
+				if k == "filename" and isinstance(v, str):
+					d[k] = update_filename(v)
+				else:
+					recursive_update(v)
+		elif isinstance(d, list):
+			for item in d:
+				recursive_update(item)
 
-        tzinfo = ZoneInfo(timezone)
-    except ImportError:
-        # For Python <3.9, fallback to UTC
-        import pytz
-
-        tzinfo = pytz.timezone(timezone) if timezone != 'UTC' else None
-    if not timestamp:
-        timestamp = datetime.now(tz=tzinfo).strftime('%Y-%m-%d')
-    async_logging = cfg.get('async_logging', False)
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir, exist_ok=True)
-    log_file = os.path.join(log_dir, f'{app_name}_{timestamp}.log')
-
-    # Custom formatter to inject timezone-aware asctime
-    class TZFormatter(logging.Formatter):
-        def __init__(
-            self,
-            fmt: str | None = None,
-            datefmt: str | None = None,
-            tz: object = None,
-        ) -> None:
-            super().__init__(fmt=fmt, datefmt=datefmt)
-            self.tz = tz
-
-        def formatTime(
-            self, record: logging.LogRecord, datefmt: str | None = None
-        ) -> str:
-            dt = datetime.fromtimestamp(record.created, tz=self.tz)
-            if datefmt:
-                return dt.strftime(datefmt)
-            return dt.isoformat()
-
-    if use_json:
-        json_format = '%(asctime)s %(levelname)s %(name)s %(message)s'
-        formatter = jsonlogger.JsonFormatter(json_format)
-        formatter.formatTime = (
-            lambda record, datefmt=None: TZFormatter().formatTime(
-                record, datefmt
-            )
-        )
-    else:
-        formatter = TZFormatter(log_format, tz=tzinfo)
-    handlers = []
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(formatter)
-    file_handler = RotatingFileHandler(
-        log_file, maxBytes=max_bytes, backupCount=backup_count
-    )
-    file_handler.setFormatter(formatter)
-
-    global _listener
-    if async_logging:
-        log_queue = queue.Queue(-1)
-        queue_handler = QueueHandler(log_queue)
-        handlers = [queue_handler]
-        _listener = QueueListener(log_queue, console_handler, file_handler)
-        _listener.start()
-    else:
-        handlers = [console_handler, file_handler]
-
-    logging.basicConfig(level=log_level, handlers=handlers, force=True)
-
-    # Exclude or set log level for specified loggers
-    exclude_loggers = cfg.get('exclude_loggers', [])
-    for logger_name in exclude_loggers:
-        logger = logging.getLogger(logger_name)
-        logger.setLevel(logging.WARNING)
-        logger.propagate = (
-            False  # Prevents messages from being passed to the root logger
-        )
+	recursive_update(config_dict)
+	return config_dict
 
 
-def stop_async_listener() -> None:
-    """Stop the async QueueListener if running (flushes all logs)."""
-    global _listener
-    if _listener is not None:
-        _listener.stop()
-        _listener = None
+def configure_loggers_from_omegaconf(merged_config, timestamp=None):
+	"""
+	Configure loggers using the 'logging' section of an OmegaConf config object.
+	Optionally updates log filenames with a timestamp.
+	"""
+	if "logging" not in merged_config:
+		raise ValueError("No 'logging' section found in config.")
+
+	# Always convert to a pure dict (resolves all OmegaConf nodes)
+	log_cfg = OmegaConf.to_container(merged_config["logging"], resolve=True, structured_config_mode="dict")
+
+	# Make a copy to avoid mutating the original config
+	log_cfg = copy.deepcopy(log_cfg)
+
+	# Ensure all 'level' values are uppercase
+	_uppercase_levels(log_cfg)
+
+	# Update all log filenames with the provided timestamp
+	if timestamp is not None:
+		log_cfg = update_log_filenames_with_timestamp(log_cfg, timestamp=timestamp)
+
+	# Ensure file handler directories exist and set default filenames if needed
+	handlers = log_cfg.get("handlers", {})
+	for handler in handlers.values():
+		if handler.get("class") in ["logging.FileHandler", "logging.handlers.RotatingFileHandler"]:
+			filename = handler.get("filename")
+			if filename:
+				Path(filename).parent.mkdir(parents=True, exist_ok=True)
+
+	# Create the loggers listed in the config file
+	dictConfig(log_cfg)
 
 
-def get_logger(name: str) -> logging.Logger:
-    """Get a logger for a given component/module.
+def get_root_logger_configured(timestamp=None):
+	"""
+	Configure the root logger using the package default config and optional timestamp.
+	"""
+	package_config = read_package_default()
+	configure_loggers_from_omegaconf(package_config, timestamp=timestamp)
 
-    Usage:
-        log = get_logger(__name__) or get_logger('my_component').
 
-    Args:
-        name (str): The logger name (usually __name__ or a component name).
-
-    Returns:
-        logging.Logger: The logger instance.
-    """
-    return logging.getLogger(name)
+def list_loggers():
+	all_loggers = list(logging.Logger.manager.loggerDict.keys())
+	logger.debug(f"List of loggers: {all_loggers}")
+	return all_loggers
