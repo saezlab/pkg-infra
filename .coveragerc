@@ -1,6 +1,6 @@
 [paths]
 source =
-    project_name
+    pkg_infra
     */site-packages/pkg_infra
 
 [run]
