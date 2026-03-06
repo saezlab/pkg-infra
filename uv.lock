@@ -1573,6 +1573,83 @@ wheels = [
 ]
 
 [[package]]
+name = "pkg-infra"
+version = "0.0.1"
+source = { editable = "." }
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "omegaconf" },
+    { name = "pandas" },
+    { name = "platformdirs" },
+    { name = "pydantic" },
+    { name = "python-json-logger" },
+    { name = "pyyaml" },
+    { name = "toml" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "bump2version" },
+    { name = "distlib" },
+    { name = "ipykernel" },
+    { name = "pre-commit" },
+    { name = "twine" },
+]
+docs = [
+    { name = "mkdocs-material" },
+    { name = "mkdocstrings", extra = ["python"] },
+    { name = "pymdown-extensions" },
+]
+security = [
+    { name = "bandit" },
+]
+semantic = [
+    { name = "rdflib" },
+]
+tests = [
+    { name = "codecov-cli" },
+    { name = "coverage" },
+    { name = "diff-cover" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+    { name = "tox" },
+    { name = "tox-gh" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bandit", marker = "extra == 'security'" },
+    { name = "bump2version", marker = "extra == 'dev'" },
+    { name = "codecov-cli", marker = "extra == 'tests'", specifier = ">=10.2.0" },
+    { name = "coverage", marker = "extra == 'tests'", specifier = ">=6.0" },
+    { name = "diff-cover", marker = "extra == 'tests'" },
+    { name = "distlib", marker = "extra == 'dev'" },
+    { name = "ipykernel", marker = "extra == 'dev'" },
+    { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.6.14" },
+    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=0.29.1,<0.30" },
+    { name = "numpy", specifier = ">=2.2.6" },
+    { name = "omegaconf", specifier = ">=2.3.0" },
+    { name = "pandas", specifier = ">=2.3.3" },
+    { name = "platformdirs", specifier = ">=4.5.0" },
+    { name = "pre-commit", marker = "extra == 'dev'" },
+    { name = "pydantic", specifier = ">=2.12.5" },
+    { name = "pymdown-extensions", marker = "extra == 'docs'", specifier = ">=10.15" },
+    { name = "pytest", marker = "extra == 'tests'", specifier = ">=6.0" },
+    { name = "pytest-cov", marker = "extra == 'tests'" },
+    { name = "python-json-logger", specifier = ">=4.0.0" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "rdflib", marker = "extra == 'semantic'", specifier = ">=6.0.0" },
+    { name = "ruff", marker = "extra == 'tests'" },
+    { name = "toml" },
+    { name = "tox", marker = "extra == 'tests'", specifier = ">=3.20.1" },
+    { name = "tox-gh", marker = "extra == 'tests'", specifier = ">=1.5.0" },
+    { name = "twine", marker = "extra == 'dev'" },
+]
+provides-extras = ["dev", "docs", "security", "semantic", "tests"]
+
+[[package]]
 name = "platformdirs"
 version = "4.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2182,83 +2259,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/fb/02/82240553b77fd1341f80ebb3eaae43ba011c7a91b4224a9f317d8e6591af/ruff-0.14.6-py3-none-win_amd64.whl", hash = "sha256:390e6480c5e3659f8a4c8d6a0373027820419ac14fa0d2713bd8e6c3e125b8b9", size = 14432087, upload-time = "2025-11-21T14:26:10.891Z" },
     { url = "https://files.pythonhosted.org/packages/a5/1f/93f9b0fad9470e4c829a5bb678da4012f0c710d09331b860ee555216f4ea/ruff-0.14.6-py3-none-win_arm64.whl", hash = "sha256:d43c81fbeae52cfa8728d8766bbf46ee4298c888072105815b392da70ca836b2", size = 13520930, upload-time = "2025-11-21T14:26:13.951Z" },
 ]
-
-[[package]]
-name = "saezlab-core"
-version = "0.0.1"
-source = { editable = "." }
-dependencies = [
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "omegaconf" },
-    { name = "pandas" },
-    { name = "platformdirs" },
-    { name = "pydantic" },
-    { name = "python-json-logger" },
-    { name = "pyyaml" },
-    { name = "toml" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "bump2version" },
-    { name = "distlib" },
-    { name = "ipykernel" },
-    { name = "pre-commit" },
-    { name = "twine" },
-]
-docs = [
-    { name = "mkdocs-material" },
-    { name = "mkdocstrings", extra = ["python"] },
-    { name = "pymdown-extensions" },
-]
-security = [
-    { name = "bandit" },
-]
-semantic = [
-    { name = "rdflib" },
-]
-tests = [
-    { name = "codecov-cli" },
-    { name = "coverage" },
-    { name = "diff-cover" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-    { name = "tox" },
-    { name = "tox-gh" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "bandit", marker = "extra == 'security'" },
-    { name = "bump2version", marker = "extra == 'dev'" },
-    { name = "codecov-cli", marker = "extra == 'tests'", specifier = ">=10.2.0" },
-    { name = "coverage", marker = "extra == 'tests'", specifier = ">=6.0" },
-    { name = "diff-cover", marker = "extra == 'tests'" },
-    { name = "distlib", marker = "extra == 'dev'" },
-    { name = "ipykernel", marker = "extra == 'dev'" },
-    { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.6.14" },
-    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=0.29.1,<0.30" },
-    { name = "numpy", specifier = ">=2.2.6" },
-    { name = "omegaconf", specifier = ">=2.3.0" },
-    { name = "pandas", specifier = ">=2.3.3" },
-    { name = "platformdirs", specifier = ">=4.5.0" },
-    { name = "pre-commit", marker = "extra == 'dev'" },
-    { name = "pydantic", specifier = ">=2.12.5" },
-    { name = "pymdown-extensions", marker = "extra == 'docs'", specifier = ">=10.15" },
-    { name = "pytest", marker = "extra == 'tests'", specifier = ">=6.0" },
-    { name = "pytest-cov", marker = "extra == 'tests'" },
-    { name = "python-json-logger", specifier = ">=4.0.0" },
-    { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "rdflib", marker = "extra == 'semantic'", specifier = ">=6.0.0" },
-    { name = "ruff", marker = "extra == 'tests'" },
-    { name = "toml" },
-    { name = "tox", marker = "extra == 'tests'", specifier = ">=3.20.1" },
-    { name = "tox-gh", marker = "extra == 'tests'", specifier = ">=1.5.0" },
-    { name = "twine", marker = "extra == 'dev'" },
-]
-provides-extras = ["dev", "docs", "security", "semantic", "tests"]
 
 [[package]]
 name = "secretstorage"

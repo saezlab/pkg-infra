@@ -42,9 +42,9 @@ license = "MIT"
 maintainers = [
     {name = "Edwin Carreño", email = "ecarrenolozano@gmail.com"}
 ]
-name = "saezlab_core"
+name = "pkg_infra"
 # packages = [
-# { include = "saezlab_core" }
+# { include = "pkg_infra" }
 # ]
 readme = "README.md"
 requires-python = ">=3.10"
@@ -81,10 +81,10 @@ tests = [
 ]
 
 [project.urls]
-Documentation = "https://saezlab.github.io/saezlab_core"
-Homepage = "https://github.com/saezlab/saezlab_core"
-Issues = "https://github.com/saezlab/saezlab_core/issues"
-Repository = "https://github.com/saezlab/saezlab_core"
+Documentation = "https://saezlab.github.io/pkg_infra"
+Homepage = "https://github.com/saezlab/pkg_infra"
+Issues = "https://github.com/saezlab/pkg_infra/issues"
+Repository = "https://github.com/saezlab/pkg_infra"
 
 # ===================================
 # =======        TOOL        ========
@@ -103,14 +103,14 @@ skips = [
 omit = [
     "**/test_*.py"
 ]
-source = ["saezlab_core"]
+source = ["pkg_infra"]
 
 # ---- Cruft: a tool to manage and update projects based on templates
 [tool.cruft]
 skip = [
     "tests",
-    "saezlab_core/__init__.py",
-    "saezlab_core/_metadata.py",
+    "pkg_infra/__init__.py",
+    "pkg_infra/_metadata.py",
     "docs/api.md",
     "docs/changelog.md",
     "docs/references.bib",
@@ -205,7 +205,7 @@ case-sensitive = false
 combine-as-imports = true
 force-sort-within-sections = true
 force-wrap-aliases = true
-known-first-party = ["saezlab_core"]
+known-first-party = ["pkg_infra"]
 known-third-party = ["numpy", "pandas"]
 length-sort = true
 lines-after-imports = 1
