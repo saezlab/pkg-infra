@@ -1,11 +1,11 @@
 ## Description
 
-The `_metadata.py` file defines the structures and logic for handling metadata associated with cached items in the `pkg_infra` package. It provides classes and helper functions to manage, store, and retrieve metadata fields, ensuring that each cache entry can be enriched with flexible, structured, and queryable information. This enables advanced search, filtering, and organization of cached data based on user-defined or system-generated metadata.
+The `_metadata.py` file defines the package-level metadata for the `pkg_infra` distribution. It exposes information such as the package version, author details, and license in a central place so that other parts of the codebase, packaging tooling, and documentation can reliably reference this information.
 
 ### Main Components
 
-- **Metadata Function:**
-  Encapsulates the metadata for a cache item, providing methods to set, get, update, and validate metadata fields.
+- **Package metadata attributes:**
+  Module-level values (for example, version, author(s), and license) that can be imported by other modules and external tools to report or validate the package’s identity and release information.
 
 ---
 
