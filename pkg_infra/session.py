@@ -48,8 +48,8 @@ class Session:
     username: str
     workspace: Path
     id: str
-    started_at_utc: str
-    started_at_local: str
+    started_at_utc: datetime
+    started_at_local: datetime
     timezone: str | None = None
     location: str | None = None
     config: object | None = None
