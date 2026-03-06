@@ -96,15 +96,13 @@ class Session:
 
         pprint(cfg)
 
-    @staticmethod
-    def get_logger() -> logging.Logger | None:
-        """Return the logger instance from the current session, if available.
+    def get_logger(self) -> logging.Logger | None:
+        """Return the logger instance from this session, if available.
 
         Returns:
             logging.Logger or None: The session logger instance, if set.
         """
-        global _current_session
-        return _current_session.session_logger if _current_session else None
+        return self.session_logger
 
 
 # ---- Global variables
@@ -241,4 +239,10 @@ def get_session(
     return _current_session
 
 
-__all__ = ['Session', 'get_session']
+def get_current_logger() -> logging.Logger | None:
+    """Return the logger from the current singleton session, if initialized."""
+
+    return _current_session.session_logger if _current_session else None
+
+
+__all__ = ['Session', 'get_session', 'get_current_logger']
