@@ -4,15 +4,15 @@
   "checkout": "master",
   "context": {
     "cookiecutter": {
-      "project_name": "saezlab_core",
-      "project_slug": "saezlab_core",
-      "package_name": "saezlab_core",
+      "project_name": "pkg_infra",
+      "project_slug": "pkg_infra",
+      "package_name": "pkg_infra",
       "short_description": "This is session handler, configuration and logging handler for Saezlab packages and applications.",
       "readme": "This is session handler, configuration and logging handler for Saezlab packages and applications.",
       "author_full_name": "Edwin Carreño",
       "author_email": "ecarrenolozano@gmail.com",
       "github_organization": "saezlab",
-      "project_repo": "https://github.com/saezlab/saezlab_core",
+      "project_repo": "https://github.com/saezlab/pkg_infra",
       "license": "MIT License",
       "_license": {
         "MIT License": {

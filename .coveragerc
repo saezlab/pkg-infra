@@ -1,12 +1,12 @@
 [paths]
 source =
-    project_name
-    */site-packages/saezlab_core
+    pkg_infra
+    */site-packages/pkg_infra
 
 [run]
 branch = true
 parallel = true
-source = saezlab_core
+source = pkg_infra
 omit = */__init__.py
 
 [report]

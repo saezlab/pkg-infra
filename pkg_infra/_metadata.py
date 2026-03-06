@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #
-# This file is part of the `saezlab_core` Python module
+# This file is part of the `pkg_infra` Python module
 #
 # Copyright 2025
 # Heidelberg University Hospital
@@ -42,12 +42,17 @@ def get_metadata() -> dict:
 
         if os.path.exists(toml_path):
             pyproject = toml.load(toml_path)
+            project = pyproject.get('project', {})
+            authors = project.get('authors', [])
+            author_names = [
+                author.get('name') for author in authors if author.get('name')
+            ]
 
             meta = {
-                'name': pyproject['tool']['poetry']['name'],
-                'version': pyproject['tool']['poetry']['version'],
-                'author': pyproject['tool']['poetry']['authors'],
-                'license': pyproject['tool']['poetry']['license'],
+                'name': project.get('name'),
+                'version': project.get('version'),
+                'author': ', '.join(author_names) if author_names else None,
+                'license': project.get('license'),
                 'full_metadata': pyproject,
             }
 
