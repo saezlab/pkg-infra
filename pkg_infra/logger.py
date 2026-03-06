@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 DEFAULT_FILENAME_LOG_MISSING = 'logs/pkg_infra.log'
+_LOGGING_CONFIGURED = False
 
 
 def _uppercase_levels(d: object) -> None:
@@ -70,6 +71,12 @@ def configure_loggers_from_omegaconf(
 
     Optionally updates log filenames with a timestamp.
     """
+    global _LOGGING_CONFIGURED
+
+    if _LOGGING_CONFIGURED:
+        logger.debug('Logging is already configured; skipping reconfiguration.')
+        return
+
     if 'logging' not in merged_config:
         raise ValueError("No 'logging' section found in config.")
 
@@ -103,6 +110,7 @@ def configure_loggers_from_omegaconf(
 
     # Create the loggers listed in the config file
     dictConfig(log_cfg)
+    _LOGGING_CONFIGURED = True
 
 
 def get_root_logger_configured(timestamp: str | None = None) -> None:
