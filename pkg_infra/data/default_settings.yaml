@@ -1,0 +1,125 @@
+# =============================================================================
+# Default configuration for pkg_infra.
+# 
+# Baseline values for: application, environments, session, logging, and
+# integrations. User configs can override any section.
+# =============================================================================
+
+settings_version: 0.0.1 # configuration schema version
+
+# -------------------------------------
+# ----      Application           -----
+# -------------------------------------
+app:
+  name: null
+  environment: dev # key under `environment`
+  logger: default  # logger name under `logging.loggers`
+
+# -------------------------------------
+# ----      Environment           -----
+# -------------------------------------
+environment:
+  dev:
+    name: development
+    debug: true
+  lab:
+    name: laboratory
+    debug: true
+  prod:
+    name: production
+    debug: false
+
+# -------------------------------------
+# ----      Session               -----
+# -------------------------------------
+session:
+  id: null
+  user: null
+  workspace: null
+  started_at: null
+  tags: [] # optional labels for the session
+
+# -------------------------------------
+# ----      Paths                 -----
+# -------------------------------------
+paths:
+  data_dir: null
+  cache_dir: null
+  log_dir: null
+  temp_dir: null
+
+# -------------------------------------
+# ----      Logging               -----
+# -------------------------------------
+logging:
+  version: 1 # logging.config.dictConfig version
+  disable_existing_loggers: false
+  formatters:
+    default:
+      format: "[%(asctime)s] [%(levelname)-5s] [%(name)-25s] ▸ %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+    simple:
+      format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: default
+      filters: [allow_all]
+      stream: ext://sys.stdout
+    file:
+      class: logging.FileHandler
+      level: DEBUG
+      formatter: default
+      filename: "logs/file_logger.log"
+      encoding: utf-8
+
+  loggers:
+    default:
+      level: WARNING
+      sysbio_infra: INFO
+      sysbioverse: DEBUG
+      metabolomics: false
+      handlers: [console, file]
+      propagate: false
+    verbose:
+      level: DEBUG
+      handlers: [console, file]
+      propagate: false
+    quiet:
+      level: WARNING
+      handlers: [file]
+      propagate: false
+
+  filters:
+    allow_all:
+      (): logging.Filter
+
+  root:
+    level: DEBUG
+    handlers: [console, file]
+
+  scope:
+    "ecosystem"
+
+# -------------------------------------
+# ----      Integrations          -----
+# -------------------------------------
+integrations: {}
+
+# -------------------------------------
+# ----      Ecosystem             -----
+# -------------------------------------
+ecosystems:
+  sysbioverse:
+    - sysbioverse
+    - sysbio_infra
+  sysbio_infra:
+    - cache_manager
+    - download_manager
+
+  metabolomics:
+    - annnet
+    - onionnet
+    - ontograph
