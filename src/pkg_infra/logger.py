@@ -112,7 +112,9 @@ def configure_loggers_from_omegaconf(
             filename = handler.get('filename')
             if filename:
                 Path(filename).parent.mkdir(parents=True, exist_ok=True)
-                logger.debug('Ensured log directory exists: %s', Path(filename).parent)
+                logger.debug(
+                    'Ensured log directory exists: %s', Path(filename).parent
+                )
 
     # Create the loggers listed in the config file
     dictConfig(log_cfg)

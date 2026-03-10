@@ -100,7 +100,10 @@ def resolve_config_paths() -> dict[str, Path | None]:
     user_dir = Path(platformdirs.user_config_dir('pkg_infra'))
     env_value = os.environ.get(ENV_VARIABLE_DEFAULT_CONFIG)
     if env_value is None:
-        logger.debug('Env var %s not set; skipping env config', ENV_VARIABLE_DEFAULT_CONFIG)
+        logger.debug(
+            'Env var %s not set; skipping env config',
+            ENV_VARIABLE_DEFAULT_CONFIG,
+        )
 
     paths = {
         'ecosystem': ecosystem_dir / ECOSYSTEM_CONFIG_FILENAME,
