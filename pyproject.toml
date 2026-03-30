@@ -35,7 +35,7 @@ dependencies = [
     "pydantic>=2.12.5",
     "python-json-logger>=4.0.0",
     "pyyaml>=6.0.3",
-    "toml",
+    "toml"
 ]
 description = "This is session handler, configuration and logging handler for Saezlab packages and applications."
 license = "MIT"
@@ -86,9 +86,6 @@ Homepage = "https://github.com/saezlab/pkg_infra"
 Issues = "https://github.com/saezlab/pkg_infra/issues"
 Repository = "https://github.com/saezlab/pkg_infra"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/pkg_infra"]
-
 # ===================================
 # =======        TOOL        ========
 # ===================================
@@ -121,6 +118,11 @@ skip = [
     "docs/notebooks/example.ipynb"
 ]
 
+[tool.hatch]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pkg_infra"]
+
 # --- Pytest: a lightweight and scalable testing tool using the pytest framework
 [tool.pytest]
 
@@ -149,9 +151,6 @@ report_level = "INFO"
 
 # ---- Ruff: a fast Python linter and formatter.
 [tool.ruff]
-extend-include = ["*.ipynb"]
-line-length = 80
-target-version = "py312"
 exclude = [
     "sandbox",
     "tests",
@@ -159,6 +158,9 @@ exclude = [
     "*/tests/**",
     "**/test_*.py"
 ]
+extend-include = ["*.ipynb"]
+line-length = 80
+target-version = "py312"
 
 [tool.ruff.format]
 quote-style = "single"
@@ -172,6 +174,8 @@ exclude = [
     "**/test_*.py"
 ]
 ignore = [
+    "COM812",  # Missing trailing comma (conflicts with formatter)
+    "ISC001",  # Implicit string concatenation (conflicts with formatter)
     # flake8-bugbear (B)
     "B008",  # Name: function-call-in-default-argument
     "B024",  # Name: abstract-base-class-without-abstract-method
@@ -223,8 +227,8 @@ force-sort-within-sections = true
 force-wrap-aliases = true
 known-first-party = ["pkg_infra"]
 known-third-party = ["numpy", "pandas"]
-length-sort = true
-lines-after-imports = 1
+length-sort = false
+# lines-after-imports = 1
 no-lines-before = ["local-folder"]
 order-by-type = true
 section-order = [
