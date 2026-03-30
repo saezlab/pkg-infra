@@ -419,6 +419,7 @@ class TestSessionManager:
         patch_logging_setup,
         patch_config_and_logger,
         caplog: pytest.LogCaptureFixture,
+        tmp_path: Path,
     ) -> None:
         """Test that the manager reuse branch logs as expected."""
         manager = SessionManager()
