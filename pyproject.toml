@@ -91,7 +91,7 @@ Repository = "https://github.com/saezlab/pkg_infra"
 # ===================================
 # ---- Bandit: tool for security analysis
 [tool.bandit]
-exclude_dirs = [".venv", "venv", ".tox", "build", "dist"]
+exclude_dirs = [".venv", "venv", ".tox", "build", "dist", "tests"]
 skips = [
     "B101"  # Name: assert_used
 ]
