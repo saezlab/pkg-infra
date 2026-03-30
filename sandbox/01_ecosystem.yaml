@@ -1,7 +1,7 @@
 app:
-  name: dna_analyzer
-  logger: quiet
+    name: dna_analyzer
+    logger: quiet
 
 integrations:
-  requests:
-    timeout: 500
+    requests:
+        timeout: 500

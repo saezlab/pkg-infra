@@ -15,5 +15,3 @@ assignees: ''
 * [document what you know]
    
 ### Acceptance Criteria
-
-

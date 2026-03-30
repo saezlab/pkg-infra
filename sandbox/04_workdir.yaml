@@ -1,8 +1,7 @@
 logging:
-  
-  formatters:
-    supersimple:
-      format: "%(message)s"
-  loggers: 
-    default:
-      format: supersimple
+    formatters:
+        supersimple:
+            format: '%(message)s'
+    loggers:
+        default:
+            format: supersimple

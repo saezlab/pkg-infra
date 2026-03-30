@@ -1,25 +1,27 @@
-import os
-import logging
-from pathlib import Path
 from importlib import resources
+import logging
+import os
+from pathlib import Path
 
-from pydantic import ValidationError
 from omegaconf import OmegaConf
 import platformdirs
+from pydantic import ValidationError
 
-from pkg_infra.schema import validate_settings
+from pkg_infra.constants import (
+    DEFAULT_PACKAGE_CONFIG_FILENAME,
+    ECOSYSTEM_CONFIG_FILENAME,
+    ENV_VARIABLE_DEFAULT_CONFIG,
+    USER_CONFIG_FILENAME,
+    WORKING_DIRECTORY_CONFIG_FILENAME,
+)
+from pkg_infra.schema import (
+    _format_validation_errors,
+    validate_settings,
+)
 
 # Module logger
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-
-
-# CONSTANTS
-ECOSYSTEM_CONFIG_FILENAME = '01_ecosystem.yaml'
-DEFAULT_PACKAGE_CONFIG_FILENAME = 'default_settings.yaml'
-USER_CONFIG_FILENAME = '03_user.yaml'
-WORKING_DIRECTORY_CONFIG_FILENAME = '04_workdir.yaml'
-ENV_VARIABLE_DEFAULT_CONFIG = 'PKG_INFRA_CONFIG'
 
 
 class ConfigLoader:
@@ -83,8 +85,15 @@ class ConfigLoader:
         logger.info('Validating merged configuration')
         try:
             validate_settings(config=config)
-        except ValidationError:
-            logger.exception('Configuration schema validation failed')
+        except ValidationError as exc:
+            formatted_errors = _format_validation_errors(exc)
+            if not logging.getLogger().handlers:
+                logging.basicConfig(level=logging.ERROR)
+            logger.error(
+                'Configuration loading failed during schema validation with %d error(s): %s',
+                len(formatted_errors),
+                '; '.join(formatted_errors),
+            )
             raise
         logger.info('Configuration loaded and validated')
         return config
