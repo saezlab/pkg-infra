@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 import logging
 from logging import NullHandler
 from pathlib import Path
-from collections.abc import Mapping
 
 from pydantic import (
-    Field,
     BaseModel,
     ConfigDict,
+    Field,
     ValidationError,
 )
 

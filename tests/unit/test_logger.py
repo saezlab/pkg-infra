@@ -16,11 +16,12 @@ Unit test organization:
 
 from __future__ import annotations
 
+import io
+
 # Standard imports
 import logging
-import sys
-import io
 import shutil
+import sys
 from pathlib import Path
 
 # Third-party imports
@@ -30,13 +31,33 @@ from omegaconf import OmegaConf
 
 # Local imports
 from pkg_infra.logger import (
+    get_logger,
     initialize_logging,
     initialize_logging_from_config,
-    get_logger,
     is_logging_initialized,
     list_loggers,
 )
 
+__all__ = [
+    'TestFallbackBehavior',
+    'TestGetLogger',
+    'TestInitializationLocking',
+    'TestInitializeLogging',
+    'TestLoggerInternals',
+    'TestLoggerIntrospection',
+    'TestLoggingConfiguration',
+    'TestRecursiveUpdate',
+    'fallback_logging_config',
+    'fallback_logging_config_file',
+    'initialized_logging',
+    'isolate_environment',
+    'minimal_logging_config',
+    'test_ensure_root_handlers_injects_and_skips',
+    'test_logfilemanager_create_log_directories',
+    'test_patch_file_handlers_for_rotation',
+    'test_update_single_filename',
+    'test_uppercase_levels',
+]
 
 # =============================================================================
 # ==== Fixtures and Setup

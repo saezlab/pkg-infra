@@ -1,32 +1,32 @@
 # tmp_valid.yaml
 settings_version: 0.0.1
 app:
-  name: demo
-  environment: dev
-  logger: default
+    name: demo
+    environment: dev
+    logger: default
 environment:
-  dev:
-    name: development
-    debug: true
+    dev:
+        name: development
+        debug: true
 session:
-  id: null
-  user: null
-  workspace: null
-  started_at: null
-  tags: []
+    id:
+    user:
+    workspace:
+    started_at:
+    tags: []
 paths:
-  data_dir: null
-  cache_dir: null
-  log_dir: null
-  temp_dir: null
+    data_dir:
+    cache_dir:
+    log_dir:
+    temp_dir:
 logging:
-  version: 1
-  disable_existing_loggers: false
-  formatters: {}
-  handlers: {}
-  loggers: {}
-  root:
-    level: WARNING
-    handlers: []
+    version: 1
+    disable_existing_loggers: false
+    formatters: {}
+    handlers: {}
+    loggers: {}
+    root:
+        level: WARNING
+        handlers: []
 integrations: {}
 packages_groups: {}

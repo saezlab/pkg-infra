@@ -1,29 +1,29 @@
 """Session lifecycle management and runtime metadata helpers."""
 
 # Standard library imports
-import json
-import uuid
-from pprint import pprint
-import socket
-import getpass
-import logging
-from pathlib import Path
+from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from functools import lru_cache
+import getpass
+import json
+import logging
+from pathlib import Path
+from pprint import pprint
+import socket
 import threading
-from dataclasses import dataclass
 from urllib.error import URLError
 from urllib.parse import urlparse
 from urllib.request import urlopen
-from collections.abc import Mapping
+import uuid
 
 # Third-party
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 # First-party imports
 from pkg_infra.config import ConfigLoader
-from pkg_infra.logger import LoggerConfigurator
 from pkg_infra.constants import IPINFO_URL, LOG_TIMESTAMP
+from pkg_infra.logger import LoggerConfigurator
 
 # Module logger
 logger = logging.getLogger(__name__)

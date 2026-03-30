@@ -203,6 +203,3 @@ Example of ecosystem config:
   - corneto_opt1: x
   - corneto_opt2: y
 ```
-
-
-

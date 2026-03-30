@@ -16,9 +16,9 @@ Unit test organization:
 
 # Standard imports
 import logging
-from pathlib import Path
-from datetime import datetime, timezone
 from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
 
 # Third-party imports
 import pytest
@@ -27,6 +27,23 @@ from omegaconf import OmegaConf
 # Local imports
 import pkg_infra.session as session_module
 from pkg_infra.session import Session, SessionManager, reset_session
+
+__all__ = [
+    'TestGetAppLogger',
+    'TestGetSessionWrapper',
+    'TestHelperWrappers',
+    'TestLocationAndConfigHelpers',
+    'TestSessionConfigAccessors',
+    'TestSessionCreate',
+    'TestSessionManager',
+    'fixed_times',
+    'patch_config_and_logger',
+    'patch_logging_setup',
+    'patch_session_runtime',
+    'reset_singleton',
+    'test_pkg_infra_get_session_delegates',
+]
+
 
 # =============================================================================
 # ==== Fixtures and Setup
@@ -340,7 +357,7 @@ class TestSessionManager:
     ) -> None:
         """Test that config_path is merged and used."""
         import yaml
-        from pkg_infra.config import ConfigLoader
+
         # Write a minimal config file
         config_file = tmp_path / 'custom.yaml'
         config_data = {'logging': {'version': 1, 'root': {'handlers': []}}}

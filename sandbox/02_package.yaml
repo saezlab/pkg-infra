@@ -1,11 +1,10 @@
 app:
-  environment: dev
-  logger: custom_logger
+    environment: dev
+    logger: custom_logger
 
 logging:
-  loggers: 
-    custom_logger:
-      level: DEBUG
-      handlers: [file]
-      propagate: false
-
+    loggers:
+        custom_logger:
+            level: DEBUG
+            handlers: [file]
+            propagate: false

@@ -24,19 +24,30 @@ from pathlib import Path
 
 # Third-party imports
 import pytest
-from pydantic import ValidationError
 from omegaconf import OmegaConf
+from pydantic import ValidationError
 
 # Local imports
 from pkg_infra.config import (
-    USER_CONFIG_FILENAME,
     ECOSYSTEM_CONFIG_FILENAME,
+    USER_CONFIG_FILENAME,
     WORKING_DIRECTORY_CONFIG_FILENAME,
     ConfigLoader,
     load_existing,
     merge_configs,
     read_package_default,
 )
+
+__all__ = [
+    'TestConfigLoader',
+    'TestLoadExisting',
+    'TestMergeConfigs',
+    'TestReadPackageDefault',
+    'invalid_yaml_path',
+    'resources_dir',
+    'valid_yaml_path',
+]
+
 
 # =============================================================================
 # ==== Fixtures and Setup

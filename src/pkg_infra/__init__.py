@@ -13,6 +13,7 @@
 # https://opensource.org/license/mit
 #
 
+
 """Session handler, configuration, and logging handler for Saezlab packages and applications."""
 
 from pkg_infra._metadata import __author__, __version__

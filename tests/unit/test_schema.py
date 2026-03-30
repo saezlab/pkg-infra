@@ -26,6 +26,12 @@ from pydantic import ValidationError
 # Local imports
 from pkg_infra.schema import validate_settings
 
+__all__ = [
+    'TestValidateSettings',
+    'valid_config_dict',
+]
+
+
 # =============================================================================
 # ==== Fixtures and Setup
 # =============================================================================
@@ -147,6 +153,3 @@ class TestValidateSettings:
             validate_settings(invalid_config)
 
         assert 'my_custon_field_app' in str(exc_info.value)
-
-
-
