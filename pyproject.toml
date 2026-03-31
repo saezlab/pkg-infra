@@ -133,9 +133,7 @@ packages = ["src/pkg_infra"]
 [tool.pytest.ini_options]
 addopts = [
     # "-Werror",  # if 3rd party libs raise DeprecationWarnings, just use filterwarnings below
-    "--import-mode=importlib",  # allow using test files with same name
-    "--cov=pkg_infra",
-    "--cov-report=term-missing"
+    "--import-mode=importlib"  # allow using test files with same name
 ]
 filterwarnings = [
 ]
