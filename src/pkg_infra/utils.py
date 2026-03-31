@@ -12,9 +12,11 @@ __all__ = [
 
 
 def get_timestamp_now() -> str:
-    """Get the current timestamp as a string in 'YYYYMMDDHHMMSS' format (UTC).
+    """Get the current UTC timestamp with an explicit ``Z`` suffix.
 
     Returns:
-        str: The current UTC timestamp formatted as 'YYYYMMDDHHMMSS'.
+        str: The current UTC timestamp formatted as ``YYYYMMDDTHHMMSSZ``.
     """
-    return datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d%H%M%S')
+    return datetime.datetime.now(datetime.timezone.utc).strftime(
+        '%Y%m%dT%H%M%SZ',
+    )

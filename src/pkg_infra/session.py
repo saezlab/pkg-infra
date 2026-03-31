@@ -2,6 +2,7 @@
 
 # Standard library imports
 from collections.abc import Mapping
+import copy
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -202,6 +203,52 @@ class Session:
         if OmegaConf.is_config(cfg):
             return OmegaConf.to_yaml(cfg)
         return None
+
+    def get_conf(self, package_name: str) -> dict[str, object]:
+        """Return the integration settings for a downstream package.
+
+        Args:
+            package_name: Name of the integration package to resolve.
+
+        Returns:
+            dict[str, object]: A plain dictionary containing only the
+                integration ``settings`` for the requested package. Returns an
+                empty dictionary when the package is unknown or has no settings.
+        """
+        if not isinstance(package_name, str) or not package_name.strip():
+            raise ValueError(f'Invalid package name {package_name!r}.')
+
+        config_dict = self.get_config_dict()
+        msg = "No integration settings found for package '%s'."
+
+        if config_dict is None:
+            logger.warning(
+                msg,
+                package_name,
+            )
+            return {}
+
+        integrations = config_dict.get('integrations')
+        if not isinstance(integrations, Mapping):
+            logger.warning(
+                msg,
+                package_name,
+            )
+            return {}
+
+        package_config = integrations.get(package_name)
+        if not isinstance(package_config, Mapping):
+            logger.warning(
+                msg,
+                package_name,
+            )
+            return {}
+
+        settings = package_config.get('settings')
+        if not isinstance(settings, Mapping):
+            return {}
+
+        return copy.deepcopy(dict(settings))
 
     @property
     def location(self) -> str | None:

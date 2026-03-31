@@ -1,3 +1,4 @@
+import copy
 from importlib import resources
 import logging
 import os
@@ -179,3 +180,22 @@ def merge_configs(parts: list[OmegaConf]) -> OmegaConf:
     if not parts:
         logger.warning('No config parts found; using empty config')
     return OmegaConf.merge(*parts) if parts else OmegaConf.create({})
+
+
+def omegaconf_to_plain_dict(obj: object) -> object:
+    """Recursively convert OmegaConf containers to plain Python objects.
+
+    If ``obj`` is already a ``dict`` or ``list``, a deep copy is returned.
+    """
+    if 'omegaconf' in str(type(obj)):
+        from omegaconf import OmegaConf
+
+        return OmegaConf.to_container(
+            obj, resolve=True, structured_config_mode='dict'
+        )
+    elif isinstance(obj, dict):
+        return copy.deepcopy(obj)
+    elif isinstance(obj, list):
+        return [omegaconf_to_plain_dict(item) for item in obj]
+    else:
+        return obj
