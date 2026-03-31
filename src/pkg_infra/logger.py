@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 import queue
 import threading
-from typing import Any
+from typing import Any, TypeAlias
 
 from omegaconf import OmegaConf
 from pythonjsonlogger.json import JsonFormatter
@@ -36,10 +36,10 @@ __all__ = [
     'list_loggers',
 ]
 
-type ConfigValue = Any
-type ConfigDict = dict[str, ConfigValue]
-type ConfigLike = Mapping[str, ConfigValue] | OmegaConf
-type LoggerEntry = dict[str, ConfigValue]
+ConfigValue: TypeAlias = Any
+ConfigDict: TypeAlias = dict[str, ConfigValue]
+ConfigLike: TypeAlias = Mapping[str, ConfigValue] | OmegaConf
+LoggerEntry: TypeAlias = dict[str, ConfigValue]
 
 _ALLOWED_LOGGING_KEYS = {
     'async_mode',
