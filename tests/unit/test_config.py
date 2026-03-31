@@ -20,6 +20,8 @@ Unit test organization:
 from __future__ import annotations
 
 # Standard imports
+import logging
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Third-party imports
@@ -35,7 +37,9 @@ from pkg_infra.config import (
     ConfigLoader,
     load_existing,
     merge_configs,
+    omegaconf_to_plain_dict,
     read_package_default,
+    resolve_config_paths,
 )
 
 __all__ = [
@@ -94,6 +98,31 @@ class TestReadPackageDefault:
         assert 'app' in config
         assert 'logging' in config
 
+    # ---- Edge Case Tests
+    def test_missing_packaged_default_returns_empty_config(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Return an empty config when the packaged default is unavailable."""
+        from pkg_infra import config as config_module
+
+        class _MissingResource:
+            def joinpath(self, _filename: str) -> '_MissingResource':
+                return self
+
+            def read_text(self, encoding: str = 'utf-8') -> str:
+                raise FileNotFoundError('missing resource')
+
+        monkeypatch.setattr(
+            config_module.resources,
+            'files',
+            lambda _package: _MissingResource(),
+        )
+
+        config = read_package_default()
+
+        assert OmegaConf.to_container(config, resolve=True) == {}
+
 
 class TestLoadExisting:
     """Test cases for load_existing."""
@@ -117,6 +146,12 @@ class TestLoadExisting:
     def test_none_input_returns_none(self) -> None:
         """Test that None input is handled gracefully."""
         assert load_existing(None) is None
+
+    # ---- Edge Case Tests
+    def test_directory_path_raises_omegaconf_error(self, tmp_path: Path) -> None:
+        """Surface OmegaConf errors when the given path is not a file."""
+        with pytest.raises(Exception):
+            load_existing(tmp_path)
 
 
 class TestMergeConfigs:
@@ -157,6 +192,115 @@ class TestMergeConfigs:
         merged = merge_configs([first, second, third])
 
         assert merged.paths.log_dir == 'third'
+
+
+class TestResolveConfigPaths:
+    """Test cases for resolve_config_paths."""
+
+    # ---- Nominal Case Tests
+    def test_env_path_is_resolved_when_set(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        """Return an env-config path when the env var is defined."""
+        monkeypatch.setattr(
+            'pkg_infra.config.platformdirs.site_config_dir',
+            lambda _appname: str(tmp_path / 'site'),
+        )
+        monkeypatch.setattr(
+            'pkg_infra.config.platformdirs.user_config_dir',
+            lambda _appname: str(tmp_path / 'user'),
+        )
+        monkeypatch.setenv('PKG_INFRA_CONFIG', str(tmp_path / 'env.yaml'))
+
+        paths = resolve_config_paths()
+
+        assert paths['env'] == tmp_path / 'env.yaml'
+
+    # ---- Edge Case Tests
+    def test_env_path_is_none_when_env_var_missing(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        """Leave the env path unset and log the missing variable."""
+        monkeypatch.setattr(
+            'pkg_infra.config.platformdirs.site_config_dir',
+            lambda _appname: str(tmp_path / 'site'),
+        )
+        monkeypatch.setattr(
+            'pkg_infra.config.platformdirs.user_config_dir',
+            lambda _appname: str(tmp_path / 'user'),
+        )
+        monkeypatch.delenv('PKG_INFRA_CONFIG', raising=False)
+        calls: list[tuple[str, str]] = []
+        monkeypatch.setattr(
+            'pkg_infra.config.logger.debug',
+            lambda message, *args: calls.append((message, args[0])),
+        )
+
+        paths = resolve_config_paths()
+
+        assert paths['env'] is None
+        assert calls == [('Env var %s not set; skipping env config', 'PKG_INFRA_CONFIG')]
+
+
+class TestOmegaConfToPlainDict:
+    """Test cases for omegaconf_to_plain_dict."""
+
+    # ---- Nominal Case Tests
+    def test_omegaconf_input_becomes_plain_containers(self) -> None:
+        """Convert OmegaConf objects into plain Python containers."""
+        config = OmegaConf.create({'app': {'name': 'demo'}, 'items': [1, 2]})
+
+        plain = omegaconf_to_plain_dict(config)
+
+        assert plain == {'app': {'name': 'demo'}, 'items': [1, 2]}
+        assert isinstance(plain, dict)
+
+    # ---- Regression Unit Tests
+    def test_plain_dict_input_is_deep_copied(self) -> None:
+        """Return a deep copy so callers cannot mutate the original input."""
+        source = {'app': {'name': 'demo'}}
+
+        plain = omegaconf_to_plain_dict(source)
+        plain['app']['name'] = 'changed'
+
+        assert source['app']['name'] == 'demo'
+
+    # ---- Edge Case Tests
+    def test_plain_list_input_is_copied_recursively(self) -> None:
+        """Recursively copy nested lists and dictionaries."""
+        source = [{'app': {'name': 'demo'}}]
+
+        plain = omegaconf_to_plain_dict(source)
+        plain[0]['app']['name'] = 'changed'
+
+        assert source[0]['app']['name'] == 'demo'
+
+
+class TestTimestampUtility:
+    """Test cases for timestamp utility behavior."""
+
+    # ---- Nominal Case Tests
+    def test_get_timestamp_now_returns_utc_timestamp_with_z_suffix(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Return a filesystem-safe UTC timestamp with an explicit Z suffix."""
+        import pkg_infra.utils as utils_module
+
+        class FrozenDateTime(datetime):
+            """Frozen datetime class for deterministic timestamp tests."""
+
+            @classmethod
+            def now(cls, tz=None):  # type: ignore[override]
+                return cls(2026, 3, 31, 12, 30, 36, tzinfo=timezone.utc)
+
+        monkeypatch.setattr(utils_module.datetime, 'datetime', FrozenDateTime)
+
+        assert utils_module.get_timestamp_now() == '20260331T123036Z'
 
 
 class TestConfigLoader:
@@ -303,6 +447,69 @@ class TestConfigLoader:
             in caplog.text
         )
         assert 'my_custon_field_app' in caplog.text
+
+    def test_validation_failure_initializes_root_logging_when_needed(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Configure basic logging before reporting schema failures."""
+        error = ValidationError.from_exception_data(
+            'Settings',
+            [
+                {
+                    'type': 'missing',
+                    'loc': ('app',),
+                    'msg': 'Field required',
+                    'input': {},
+                },
+            ],
+        )
+
+        monkeypatch.setattr(
+            'pkg_infra.config.resolve_config_paths',
+            lambda: {
+                'ecosystem': None,
+                'package': None,
+                'user': None,
+                'cwd': None,
+                'env': None,
+                'custom_path': None,
+            },
+        )
+        monkeypatch.setattr(
+            'pkg_infra.config.read_package_default',
+            lambda: OmegaConf.create({}),
+        )
+        monkeypatch.setattr('pkg_infra.config.load_existing', lambda _path: None)
+        monkeypatch.setattr(
+            'pkg_infra.config.validate_settings',
+            lambda config: (_ for _ in ()).throw(error),
+        )
+
+        original_get_logger = logging.getLogger
+        calls: list[int] = []
+        monkeypatch.setattr(
+            'pkg_infra.config.logging.basicConfig',
+            lambda *, level: calls.append(level),
+        )
+        monkeypatch.setattr(
+            'pkg_infra.config.logging.getLogger',
+            lambda *args, **kwargs: original_get_logger(*args, **kwargs),
+        )
+        original_get_logger().handlers.clear()
+        error_messages: list[str] = []
+        monkeypatch.setattr(
+            'pkg_infra.config.logger.error',
+            lambda message, *args: error_messages.append(message),
+        )
+
+        with pytest.raises(ValidationError):
+            ConfigLoader.load_config()
+
+        assert calls == [logging.ERROR]
+        assert error_messages == [
+            'Configuration loading failed during schema validation with %d error(s): %s',
+        ]
 
     def test_env_config_keeps_highest_precedence(
         self,

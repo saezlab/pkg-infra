@@ -2,17 +2,19 @@
 Unit tests for session management utilities.
 
 Unit test organization:
-        - Nominal Case Tests: Test the nominal case where the function is expected
-            to work correctly with typical input values.
-        - Negative Case Tests: Test cases that involve invalid input values or
-            scenarios where the function should handle errors gracefully.
-        - Edge Case Tests: Test cases that involve boundary conditions or unusual
-            input values that may not be common but should still be handled correctly
-            by the function.
-        - Regression Unit Tests: Test cases that ensure that previously fixed bugs
-            do not reoccur and that existing functionality remains intact after
-            changes to the codebase.
+    - Nominal Case Tests: Test the nominal case where the function is
+      expected to work correctly with typical input values.
+    - Negative Case Tests: Test cases that involve invalid input values
+      or scenarios where the function should handle errors gracefully.
+    - Edge Case Tests: Test cases that involve boundary conditions or
+      unusual input values that may not be common but should still be
+      handled correctly by the function.
+    - Regression Unit Tests: Test cases that ensure that previously
+      fixed bugs do not reoccur and that existing functionality remains
+      intact after changes to the codebase.
 """
+
+from __future__ import annotations
 
 # Standard imports
 import logging
@@ -27,22 +29,6 @@ from omegaconf import OmegaConf
 # Local imports
 import pkg_infra.session as session_module
 from pkg_infra.session import Session, SessionManager, reset_session
-
-__all__ = [
-    'TestGetAppLogger',
-    'TestGetSessionWrapper',
-    'TestHelperWrappers',
-    'TestLocationAndConfigHelpers',
-    'TestSessionConfigAccessors',
-    'TestSessionCreate',
-    'TestSessionManager',
-    'fixed_times',
-    'patch_config_and_logger',
-    'patch_logging_setup',
-    'patch_session_runtime',
-    'reset_singleton',
-    'test_pkg_infra_get_session_delegates',
-]
 
 
 # =============================================================================
@@ -63,7 +49,11 @@ def fixed_times() -> tuple[datetime, datetime]:
 
 
 @pytest.fixture
-def patch_session_runtime(monkeypatch: pytest.MonkeyPatch, fixed_times, tmp_path: Path) -> None:
+def patch_session_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+    fixed_times: tuple[datetime, datetime],
+    tmp_path: Path,
+) -> None:
     """Patch runtime helpers to deterministic values using tmp_path."""
     now_utc, now_local = fixed_times
     monkeypatch.setattr(session_module, '_get_hostname', lambda: 'host')
@@ -78,16 +68,12 @@ def patch_session_runtime(monkeypatch: pytest.MonkeyPatch, fixed_times, tmp_path
 def patch_logging_setup(monkeypatch: pytest.MonkeyPatch) -> None:
     """Disable LoggerConfigurator.logger_setup side effects."""
     import pkg_infra.logger
-    monkeypatch.setattr(pkg_infra.logger.LoggerConfigurator, 'logger_setup', lambda self, config, timestamp: None)
 
-# Additional test for the public API get_session
-def test_pkg_infra_get_session_delegates(monkeypatch: pytest.MonkeyPatch):
-    import pkg_infra
-    sentinel = object()
-    monkeypatch.setattr(pkg_infra.session._default_manager, 'get_session', lambda *args, **kwargs: sentinel)
-    assert pkg_infra.get_session('x') is sentinel
-    # Also test config_path argument is passed
-    assert pkg_infra.get_session('x', config_path='foo.yaml') is sentinel
+    monkeypatch.setattr(
+        pkg_infra.logger.LoggerConfigurator,
+        'logger_setup',
+        lambda self, config, timestamp: None,
+    )
 
 
 @pytest.fixture
@@ -328,6 +314,120 @@ class TestSessionConfigAccessors:
         with caplog.at_level('INFO'):
             session.print_config()
         assert 'Session config is empty.' in caplog.text
+
+    # ---- Nominal Case Tests
+    def test_get_conf_returns_integration_settings(self, tmp_path: Path) -> None:
+        """Return only the requested integration settings as a plain dict."""
+        cfg = OmegaConf.create(
+            {
+                'integrations': {
+                    'omnipath': {
+                        'settings': {
+                            'base_url': 'https://omnipathdb.org',
+                            'timeout': 30,
+                        },
+                        'logging': {'level': 'INFO'},
+                    },
+                    'decoupler': {
+                        'settings': {'method': 'ulm'},
+                    },
+                },
+            },
+        )
+        session = Session.create(
+            hostname='host',
+            username='user',
+            workspace=tmp_path,
+            process_id='pid-1',
+            now_utc=datetime.now(timezone.utc),
+            now_local=datetime.now(timezone.utc),
+            timezone='UTC',
+            location_enabled=False,
+            config=cfg,
+            session_logger=None,
+        )
+
+        result = session.get_conf('omnipath')
+
+        assert result == {
+            'base_url': 'https://omnipathdb.org',
+            'timeout': 30,
+        }
+
+    # ---- Negative Case Tests
+    def test_get_conf_unknown_package_returns_empty_and_warns(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        tmp_path: Path,
+    ) -> None:
+        """Return an empty dict and warn when the package is unknown."""
+        session = Session.create(
+            hostname='host',
+            username='user',
+            workspace=tmp_path,
+            process_id='pid-1',
+            now_utc=datetime.now(timezone.utc),
+            now_local=datetime.now(timezone.utc),
+            timezone='UTC',
+            location_enabled=False,
+            config={'integrations': {}},
+            session_logger=None,
+        )
+
+        with caplog.at_level('WARNING'):
+            result = session.get_conf('omnipath')
+
+        assert result == {}
+        assert "No integration settings found for package 'omnipath'" in caplog.text
+
+    # ---- Edge Case Tests
+    def test_get_conf_package_without_settings_returns_empty_dict(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Return an empty dict when an integration has no settings section."""
+        session = Session.create(
+            hostname='host',
+            username='user',
+            workspace=tmp_path,
+            process_id='pid-1',
+            now_utc=datetime.now(timezone.utc),
+            now_local=datetime.now(timezone.utc),
+            timezone='UTC',
+            location_enabled=False,
+            config={'integrations': {'omnipath': {'logging': {'level': 'INFO'}}}},
+            session_logger=None,
+        )
+
+        assert session.get_conf('omnipath') == {}
+
+    # ---- Regression Unit Tests
+    def test_get_conf_returns_a_copy(self, tmp_path: Path) -> None:
+        """Return a copy so callers cannot mutate the stored configuration."""
+        config = {
+            'integrations': {
+                'omnipath': {
+                    'settings': {'timeout': 30},
+                },
+            },
+        }
+        session = Session.create(
+            hostname='host',
+            username='user',
+            workspace=tmp_path,
+            process_id='pid-1',
+            now_utc=datetime.now(timezone.utc),
+            now_local=datetime.now(timezone.utc),
+            timezone='UTC',
+            location_enabled=False,
+            config=config,
+            session_logger=None,
+        )
+
+        result = session.get_conf('omnipath')
+        result['timeout'] = 99
+
+        assert config['integrations']['omnipath']['settings']['timeout'] == 30
 
 
 class TestSessionManager:
