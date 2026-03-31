@@ -1,2 +1,7 @@
 app:
     name: my_user_app
+
+integrations:
+    ontograph:
+        settings:
+            timeout: 60

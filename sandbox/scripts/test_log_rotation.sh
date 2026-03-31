@@ -1,91 +1,96 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-# Create a temp directory for logs
 TMPDIR=$(mktemp -d)
-echo $TMPDIR
+echo "$TMPDIR"
 cd "$TMPDIR"
 
-
-# Write a Python script using pkg_infra.logger
-
 cat > log_rotate_test.py <<'PY'
-import os
-from pkg_infra.logger import initialize_logging_from_config, get_logger
+from pathlib import Path
+
+from pkg_infra.logger import get_logger, initialize_logging_from_config
+
 
 config = {
+    "settings_version": "0.0.1",
+    "app": {
+        "environment": "test",
+        "logger": "default",
+    },
     "logging": {
         "version": 1,
+        "disable_existing_loggers": False,
+        "file_output_format": "text",
         "formatters": {
-            "simple": {"format": "%(levelname)s | %(message)s"}
+            "simple": {"format": "%(levelname)s | %(message)s"},
         },
         "handlers": {
             "file": {
                 "class": "logging.handlers.RotatingFileHandler",
                 "filename": "test.log",
-                "maxBytes": 1024,  # 1 KB for quick rotation
+                "maxBytes": 1024,
                 "backupCount": 2,
-                "formatter": "simple"
-            }
+                "formatter": "simple",
+                "level": "INFO",
+            },
+            "null": {
+                "class": "logging.NullHandler",
+                "formatter": "simple",
+                "level": "NOTSET",
+            },
         },
+        "loggers": {
+            "default": {
+                "level": "INFO",
+                "handlers": ["file"],
+                "propagate": False,
+            },
+        },
+        "filters": {},
         "root": {
             "level": "INFO",
-            "handlers": ["file"]
-        }
-    }
+            "handlers": ["file"],
+        },
+    },
+    "integrations": {},
+    "packages_groups": {},
 }
 
 initialize_logging_from_config(config)
-logger = get_logger("root")  # root logger
+logger = get_logger("default")
 
-# Acceptance criteria verification
 results = []
+results.append((logger.level == 20, f"Logger level is INFO (20): {logger.level == 20}"))
+results.append((logger.name == "default", f"Logger is default: {logger.name == 'default'}"))
 
-# 1. Logger uses the log level specified in the config
-expected_level = 20  # INFO
-actual_level = logger.level
-results.append((actual_level == expected_level, f"Logger level is INFO (20): {actual_level == expected_level}"))
+for index in range(2000):
+    logger.debug("DEBUG line %s", index)
+    logger.info("INFO line %s", index)
+    logger.warning("WARNING line %s", index)
 
-# 2. Root logger’s level is correctly applied
-results.append((logger.name == "root", f"Logger is root: {logger.name == 'root'}"))
+log_files = sorted(Path(".").glob("test_*.log"))
+results.append((bool(log_files), f"Timestamped log files created: {bool(log_files)}"))
 
-# 3. Log file is created
-for i in range(2000):
-    logger.debug(f"DEBUG line {i}")
-    logger.info(f"INFO line {i}")
-    logger.warning(f"WARNING line {i}")
-
-log_files = [f for f in os.listdir('.') if f.startswith('test_') or f == 'test.log']
-log_file_exists = any(f.endswith('.log') for f in log_files)
-results.append((log_file_exists, f"Log file created: {log_file_exists}"))
-
-# 4. Only INFO and higher messages are present
 found_debug = False
 found_info = False
 found_warning = False
-for fname in log_files:
-    if not fname.endswith('.log'):
-        continue
-    with open(fname) as f:
-        content = f.read()
-        if "DEBUG line" in content:
-            found_debug = True
-        if "INFO line" in content:
-            found_info = True
-        if "WARNING line" in content:
-            found_warning = True
+for path in log_files:
+    content = path.read_text(encoding="utf-8")
+    if "DEBUG line" in content:
+        found_debug = True
+    if "INFO line" in content:
+        found_info = True
+    if "WARNING line" in content:
+        found_warning = True
+
 results.append((not found_debug, f"DEBUG messages filtered: {not found_debug}"))
 results.append((found_info, f"INFO messages present: {found_info}"))
 results.append((found_warning, f"WARNING messages present: {found_warning}"))
 
-# 5. Print results
 print("\nACCEPTANCE CRITERIA RESULTS:")
-for passed, msg in results:
-    print(f"[{'PASS' if passed else 'FAIL'}] {msg}")
+for passed, message in results:
+    print(f"[{'PASS' if passed else 'FAIL'}] {message}")
 PY
 
-
 python3 log_rotate_test.py
-
-# Show the log files created
 ls -lh test_*.log

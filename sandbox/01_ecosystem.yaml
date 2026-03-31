@@ -1,7 +1,14 @@
 app:
-    name: dna_analyzer
-    logger: quiet
+    name: ecosystem_demo
 
 integrations:
-    requests:
-        timeout: 500
+    ontograph:
+        settings:
+            timeout: 15
+
+packages_groups:
+    sysbioverse:
+        logging:
+            enabled: true
+            level: INFO
+            handlers: [console, file]
