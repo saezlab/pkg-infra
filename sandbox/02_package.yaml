@@ -1,10 +1,10 @@
 app:
     environment: dev
-    logger: custom_logger
+    logger: verbose
 
 logging:
     loggers:
-        custom_logger:
+        verbose:
             level: DEBUG
-            handlers: [file]
+            handlers: [console, file]
             propagate: false

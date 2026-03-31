@@ -2,6 +2,6 @@ logging:
     formatters:
         supersimple:
             format: '%(message)s'
-    loggers:
-        default:
-            format: supersimple
+    handlers:
+        console:
+            formatter: supersimple

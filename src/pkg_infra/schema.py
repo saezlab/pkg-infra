@@ -4,6 +4,7 @@ from collections.abc import Mapping
 import logging
 from logging import NullHandler
 from pathlib import Path
+from typing import Literal
 
 from pydantic import (
     BaseModel,
@@ -104,20 +105,36 @@ class LoggingConfigProfile(BaseModel):
 
     version: int
     disable_existing_loggers: bool
+    file_output_format: Literal['text', 'json'] = 'text'
+    async_mode: bool = False
+    queue_maxsize: int | None = Field(default=None, ge=1)
     formatters: dict[str, FormatterProfile]
     handlers: dict[str, HandlerProfile]
     loggers: dict[str, LoggerProfile]
     filters: dict[str, object]
     root: RootLoggerProfile
-    scope: str | None = None
 
     model_config = ConfigDict(extra='forbid', populate_by_name=True)
 
 
 # -- 6. Section: Integrations
+class IntegrationSettingsProfile(BaseModel):
+    """Settings for an individual integration/package."""
+
+    logging: dict | None = None
+    settings: dict | None = None
 
 
 # -- 7. Section: Packages Groups
+class PackageGroupLoggingProfile(BaseModel):
+    enabled: bool = True
+    level: str
+    handlers: list[str]
+
+
+class PackageGroupProfile(BaseModel):
+    logging: PackageGroupLoggingProfile
+    packages: list[str]
 
 
 # -- 8. Top-level Settings (defined last to avoid forward reference issues)
@@ -132,8 +149,12 @@ class Settings(BaseModel):
     session: SessionConfigProfile
     paths: PathsConfigProfile
     logging: LoggingConfigProfile
-    integrations: dict[str, object] = Field(default_factory=dict)
-    packages_groups: dict[str, list[str]] = Field(default_factory=dict)
+    integrations: dict[str, IntegrationSettingsProfile] = Field(
+        default_factory=dict
+    )
+    packages_groups: dict[str, PackageGroupProfile] = Field(
+        default_factory=dict
+    )
 
 
 # --- Validation Functions
@@ -166,6 +187,25 @@ def validate_settings(
 
     validated = Settings.model_validate(data)
     logger.debug('Valid schema: True')
+    if show:
+        logger.info(validated)
+    return True
+
+
+def validate_logging_section(
+    logging_config: Mapping[str, object] | object, show: bool = False
+) -> bool:
+    """Validate a logging section config against LoggingConfigProfile.
+
+    Returns True when valid. Raises ValidationError if invalid.
+    """
+    data = logging_config
+    logger.debug('Validating logging section schema')
+    if OmegaConf is not None and OmegaConf.is_config(logging_config):
+        data = OmegaConf.to_container(logging_config, resolve=True)
+
+    validated = LoggingConfigProfile.model_validate(data)
+    logger.debug('Valid logging section: True')
     if show:
         logger.info(validated)
     return True

@@ -54,6 +54,9 @@ paths:
 logging:
     version: 1 # logging.config.dictConfig version
     disable_existing_loggers: false
+    file_output_format: text # text or json for file handlers
+    async_mode: false # enable queue-based non-blocking logging
+    queue_maxsize: 10000 # maximum queued records when async mode is enabled
     formatters:
         default:
             format: '[%(asctime)s] [%(levelname)-5s] [%(name)-25s] ▸ %(message)s'
@@ -101,49 +104,94 @@ logging:
             (): logging.Filter
 
     root:
-        level: WARNING
+        level: warning
         handlers: [console, file]
-
-    scope: ecosystem
 
 # -------------------------------------
 # ----      Integrations          -----
 # -------------------------------------
-integrations: {}
+integrations:
+    # Part of: sysbio_infra group
+    cache_manager:
+        settings:
+            cache_dir: /path/to/cache
+            default_expiry: 3600
+
+    # Part of: sysbio_infra group
+    download_manager:
+        settings:
+            download_dir: /path/to/downloads
+            max_retries: 3
+
+    # Part of: sysbioverse group
+    corneto:
+        logging:
+            level: INFO   # overrides group level only
+
+        settings:
+            network_path: src
+
+    # Part of: No group
+    ontograph:
+        logging:
+            enabled: true
+            level: INFO
+            handlers: [console, file]
+
+        settings:
+            api_url: https://api.ontograph.org
+            timeout: 30
+
 
 # -------------------------------------
 # ----      Ecosystem             -----
 # -------------------------------------
 packages_groups:
-  # Our ecosystem at saezlab
-  # Goals: 
-    # For instance: silence message from an entire group
-    # Define the output for the group
-    # Where to store the log files based on the group
 
+    # Description: Set of bioinfomatics tools developed by Saezlab
     sysbioverse:
-    -   sysbioverse
-    -   sysbio_infra
-    -   corneto
-    -   omnipath
-    -   decoupler
+        logging:
+            enabled: true
+            level: DEBUG
+            handlers: [console, file]
+        packages:
+        -   sysbioverse
+        -   sysbio_infra
+        -   corneto
+        -   omnipath
+        -   decoupler
 
-  # Well know in the biology community
+    # Description: Well known packages in the Biology community
     scverse:
-    -   anndata
-    -   scanpy
+        logging:
+            enabled: true
+            level: DEBUG
+            handlers: [console, file]
+        packages:
+        -   anndata
+        -   scanpy
 
-  # more technical
+    # Description: More technical packages supporting Non-Bioinformatics tasks
     sysbio_infra:
-    -   cache_manager
-    -   download_manager
+        logging:
+            enabled: true
+            level: DEBUG
+            handlers: [console, file]
+        packages:
+        -   cache_manager
+        -   download_manager
 
- # enable or disable messages
+    # Description: Well known in the data science community
     scientific:
-    -   pandas
-    -   seaboarn
-    -   scipy
-    -   numpy
-    -   matplotlib
-    -   plotly
-    -   scikit-learn
+        logging:
+            enabled: true
+            level: DEBUG
+            handlers: [console, file]
+        packages:
+        -   pandas
+        -   seaborn
+        -   scipy
+        -   numpy
+        -   matplotlib
+        -   plotly
+        -   scikit-learn

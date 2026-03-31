@@ -1,78 +1,66 @@
+"""Demo 03: structured JSON file logging for downstream analysis tools.
+
+Usage:
+    .venv/bin/python sandbox/scripts/demo/demo_03.py
 """
-Demo main: Logging-only application (external noise controlled via logging config)
 
-Usage: .venv/bin/python sandbox/scripts/demo/main.py
-"""
+from __future__ import annotations
 
-import logging
-import requests
+import json
+from pathlib import Path
+import tempfile
 
-from pkg_infra.session import get_session
-from pkg_infra.logger import list_loggers
-
-
-def main():
-    # -----------------------------
-    # Session logger (your system)
-    # -----------------------------
-    session = get_session(
-        workspace="./",
-        include_location=True,
-        config_path="sandbox/scripts/demo/config.yaml")
-    
-    logger = session.session_logger
-
-    print(f"Default logger: {logger.name}")
-
-    print(f"Loggers: {list_loggers()}")
+from pkg_infra import get_session
+from pkg_infra.session import reset_session
 
 
-    if logger is None:
-        raise RuntimeError("Session logger is not initialized.")
+LOG_DIR = Path('sandbox/scripts/demo/logs')
 
-    logger.info("Demo started: clean logging-only setup")
 
-    # -----------------------------
-    # 1. Application logs
-    # -----------------------------
-    logger.debug("Debug message (may be hidden depending on config)")
-    logger.info("Info message")
-    logger.warning("Warning message")
-    logger.error("Error message")
+def main() -> None:
+    """Write JSON logs and print one parsed record."""
+    reset_session()
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
 
-    # -----------------------------
-    # 2. HTTP request (urllib3 underneath)
-    # -----------------------------
-    logger.info("Making HTTP request via requests (urllib3 underneath)")
-
-    try:
-        response = requests.get(
-            "https://httpbin.org/get",
-            timeout=5
+    with tempfile.NamedTemporaryFile(
+        mode='w',
+        suffix='.yaml',
+        delete=False,
+        encoding='utf-8',
+    ) as handle:
+        handle.write(
+            '\n'.join([
+                'logging:',
+                '  file_output_format: json',
+                '  handlers:',
+                '    file:',
+                '      filename: sandbox/scripts/demo/logs/structured_demo.log',
+            ]),
         )
-        logger.info(f"HTTP status: {response.status_code}")
+        override_path = Path(handle.name)
 
-    except Exception as e:
-        logger.error(f"HTTP request failed: {e}")
+    session = get_session(
+        'sandbox/scripts/demo',
+        config_path=override_path,
+    )
+    logger = session.session_logger
+    if logger is None:
+        raise RuntimeError('Session logger is not initialized.')
 
-    # -----------------------------
-    # 3. Multiple requests to test pooling
-    # -----------------------------
-    logger.info("Running multiple HTTP requests to test connection reuse")
+    logger.info('Structured logging demo started')
+    logger.warning('This record can be parsed by log analysis tooling')
 
-    for i in range(5):
-        try:
-            r = requests.get("https://httpbin.org/uuid", timeout=5)
-            logger.info(f"Request {i + 1} OK: {r.status_code}")
+    json_files = sorted(LOG_DIR.glob('structured_demo_*.json'))
+    if not json_files:
+        raise RuntimeError('No JSON log file was created.')
 
-        except Exception as e:
-            logger.error(f"Request {i + 1} failed: {e}")
+    log_file = json_files[-1]
+    last_record = json.loads(log_file.read_text(encoding='utf-8').splitlines()[-1])
 
-    # -----------------------------
-    # 4. End of demo
-    # -----------------------------
-    logger.info("Demo finished successfully")
+    print(f'JSON log file: {log_file}')
+    print(f'Parsed keys: {sorted(last_record)}')
+    print(f'Message: {last_record["message"]}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
