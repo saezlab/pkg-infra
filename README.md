@@ -20,8 +20,6 @@ ad hoc across projects:
 - Layered YAML configuration with validation and predictable precedence
 - Centralized logging based on Python's standard `logging` module
 
-
-
 ## What it includes
 
 - `pkg_infra.get_session(...)` as the main entrypoint for initializing runtime
