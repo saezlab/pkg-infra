@@ -1,6 +1,13 @@
+![project-banner](https://github.com/saezlab/pkg_infra/raw/main/docs/assets/project-banner-readme.png)
+
+---
+
+
 [![Tests](https://img.shields.io/github/actions/workflow/status/saezlab/pkg_infra/ci-testing-unit.yml?branch=main)](https://github.com/saezlab/pkg_infra/actions/workflows/ci-testing-unit.yml)
 [![Docs](https://img.shields.io/badge/docs-MkDocs-blue)](https://saezlab.github.io/pkg_infra/)
 ![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)
+[![PyPI](https://img.shields.io/pypi/v/pkg_infra)](https://pypi.org/project/pkg_infra/)
+[![Python](https://img.shields.io/pypi/pyversions/pkg_infra)](https://pypi.org/project/pkg_infra/)
 [![PyPI](https://img.shields.io/pypi/v/pkg_infra)](https://pypi.org/project/pkg_infra/)
 [![Python](https://img.shields.io/pypi/pyversions/pkg_infra)](https://pypi.org/project/pkg_infra/)
 ![License](https://img.shields.io/github/license/saezlab/pkg_infra)
@@ -15,7 +22,7 @@ ad hoc across projects:
 - Layered YAML configuration with validation and predictable precedence
 - Centralized logging based on Python's standard `logging` module
 
-![project-banner](https://github.com/saezlab/pkg_infra/raw/main/docs/assets/project-banner-readme.png)
+
 
 ## What it includes
 
