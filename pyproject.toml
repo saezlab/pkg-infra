@@ -42,13 +42,13 @@ license = "MIT"
 maintainers = [
     {name = "Edwin Carreño", email = "ecarrenolozano@gmail.com"}
 ]
-name = "pkg_infra"
+name = "pkg-infra"
 # packages = [
 # { include = "pkg_infra" }
 # ]
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.0.1"
+version = "0.0.2"
 
 [project.optional-dependencies]
 dev = [
