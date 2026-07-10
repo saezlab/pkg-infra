@@ -34,6 +34,9 @@ __all__ = [
     'initialize_logging_from_config',
     'is_logging_initialized',
     'list_loggers',
+    'log_files',
+    'logfile',
+    'open_log',
 ]
 
 ConfigValue: TypeAlias = Any
@@ -920,3 +923,101 @@ def get_logger(name: str) -> logging.Logger:
 def list_loggers() -> list[str]:
     """Return the names currently known to the logging manager."""
     return sorted(logging.Logger.manager.loggerDict.keys())
+
+
+def log_files() -> list[Path]:
+    """Return the paths of every active log file.
+
+    Inspects the ``FileHandler`` instances attached to the root logger, the
+    registered loggers, and -- when asynchronous logging is enabled -- the
+    queue listener, returning the de-duplicated list of destination files in
+    the order they were discovered.
+
+    Returns:
+        The active log-file paths. Empty when no file handler is configured.
+    """
+    handlers = list(_iter_active_handlers())
+
+    if _logging_listener is not None:
+        handlers.extend(_logging_listener.handlers)
+
+    seen: dict[str, Path] = {}
+    for handler in handlers:
+        base = getattr(handler, 'baseFilename', None)
+        if base and base not in seen:
+            seen[base] = Path(base)
+
+    return list(seen.values())
+
+
+def logfile() -> Path | None:
+    """Return the current (most recently written) active log file.
+
+    When several file handlers are configured, the existing file with the
+    newest modification time is returned; if none exist on disk yet, the first
+    configured destination is returned so callers still learn where logs will
+    be written.
+
+    Returns:
+        The log-file path, or ``None`` when no file handler is configured.
+    """
+    files = log_files()
+
+    if not files:
+        logger.warning('No active log file: no file handler is configured.')
+        return None
+
+    existing = [path for path in files if path.exists()]
+
+    if existing:
+        return max(existing, key=lambda path: path.stat().st_mtime)
+
+    return files[0]
+
+
+def open_log(
+    path: str | Path | None = None,
+    pager: str | None = None,
+) -> Path | None:
+    """Open a log file in a terminal pager.
+
+    Args:
+        path: Log file to open. Defaults to :func:`logfile` (the current one).
+        pager: Pager command to use. Defaults to the ``PAGER`` environment
+            variable, falling back to ``less``. The path is appended as the
+            final argument.
+
+    Returns:
+        The path that was opened (or would have been opened), or ``None`` when
+        no log file is configured.
+    """
+    target = Path(path) if path is not None else logfile()
+
+    if target is None:
+        return None
+
+    if not target.exists():
+        logger.warning('Log file does not exist yet: %s', target)
+        print(target)
+        return target
+
+    import shutil
+    import subprocess
+
+    pager_cmd = (pager or os.environ.get('PAGER') or 'less').split()
+    executable = shutil.which(pager_cmd[0])
+
+    if executable is None:
+        logger.warning(
+            "Pager '%s' not found; printing path instead.", pager_cmd[0],
+        )
+        print(target)
+        return target
+
+    # For ``less`` jump straight to the end -- the interesting part of a log.
+    if Path(pager_cmd[0]).name == 'less' and len(pager_cmd) == 1:
+        pager_cmd.append('+G')
+
+    subprocess.run([*pager_cmd, str(target)], check=False)  # noqa: S603
+
+    return target

@@ -48,4 +48,44 @@ def get_session(
     )
 
 
-__all__ = ['get_session', '__version__', '__author__']
+def logfile() -> Path | None:
+    """Return the current active log file, or ``None`` if none is configured.
+
+    Thin re-export of :func:`pkg_infra.logger.logfile`.
+    """
+    from pkg_infra.logger import logfile as _logfile
+
+    return _logfile()
+
+
+def log_files() -> list[Path]:
+    """Return every active log-file path.
+
+    Thin re-export of :func:`pkg_infra.logger.log_files`.
+    """
+    from pkg_infra.logger import log_files as _log_files
+
+    return _log_files()
+
+
+def open_log(
+    path: str | Path | None = None,
+    pager: str | None = None,
+) -> Path | None:
+    """Open a log file in a terminal pager.
+
+    Thin re-export of :func:`pkg_infra.logger.open_log`.
+    """
+    from pkg_infra.logger import open_log as _open_log
+
+    return _open_log(path=path, pager=pager)
+
+
+__all__ = [
+    'get_session',
+    'logfile',
+    'log_files',
+    'open_log',
+    '__version__',
+    '__author__',
+]
